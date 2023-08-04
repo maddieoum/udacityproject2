@@ -1,0 +1,54 @@
+SELECT c.Country, SUM(i.Total) AS TotalSpent
+FROM Customer c
+JOIN Invoice i ON c.CustomerId = i.CustomerId
+GROUP BY c.Country
+ORDER BY TotalSpent DESC
+LIMIT 1;
+
+SELECT Artist.Name, COUNT(*) AS TrackCount
+FROM Artist
+JOIN Album ON Artist.ArtistId = Album.ArtistId
+JOIN Track ON Album.AlbumId = Track.AlbumId
+JOIN Genre ON Track.GenreId = Genre.GenreId
+WHERE Genre.Name = 'Jazz'
+GROUP BY Artist.Name
+ORDER BY TrackCount DESC
+LIMIT 10;
+
+SELECT c.Country, g.Name AS genre_name, COUNT(*) AS purchase_count
+FROM Customer c
+JOIN Invoice i ON c.CustomerId = i.CustomerId
+JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+JOIN Track t ON il.TrackId = t.TrackId
+JOIN Genre g ON t.GenreId = g.GenreId
+GROUP BY c.Country, g.GenreId
+HAVING COUNT(*) = (
+    SELECT MAX(purchase_count)
+    FROM (
+        SELECT c.Country, g.GenreId, COUNT(*) AS purchase_count
+        FROM Customer c
+        JOIN Invoice i ON c.CustomerId = i.CustomerId
+        JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+        JOIN Track t ON il.TrackId = t.TrackId
+        JOIN Genre g ON t.GenreId = g.GenreId
+        GROUP BY c.Country, g.GenreId
+    ) AS subquery
+    WHERE subquery.Country = c.Country
+)
+ORDER BY c.Country;
+
+SELECT c.Country, c.FirstName || ' ' || c.LastName AS CustomerName, SUM(i.Total) AS TotalSpend
+FROM Customer c
+JOIN Invoice i ON c.CustomerId = i.CustomerId
+GROUP BY c.Country, CustomerName
+HAVING SUM(i.Total) = (
+    SELECT MAX(Total)
+    FROM (
+        SELECT Country, SUM(Total) AS Total
+        FROM Customer c
+        JOIN Invoice i ON c.CustomerId = i.CustomerId
+        GROUP BY Country
+    ) AS subquery
+    WHERE subquery.Country = c.Country
+)
+ORDER BY c.Country;
